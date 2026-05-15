@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ค้นหารหัสลูกปืน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== CSS VARIABLES ===== */
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #4f8ef7;
+    --accent-glow: rgba(79,142,247,0.18);
+    --accent2: #f7c94f;
+    --text: #e8eaf2;
+    --text-muted: #7a82a8;
+    --success: #3ecf8e;
+    --danger: #ff6b6b;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 32px rgba(0,0,0,0.4);
+    --font: 'Sarabun', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== BACKGROUND TEXTURE ===== */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(79,142,247,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(247,201,79,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== LAYOUT ===== */
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+    animation: fadeDown 0.5s ease both;
+  }
+  .header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px; height: 56px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    font-size: 26px;
+    margin-bottom: 12px;
+    box-shadow: 0 0 0 6px var(--accent-glow);
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  .header p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ===== CARD ===== */
+  .card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s ease both;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ===== INPUT GROUP ===== */
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .input-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .input-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .input-label span {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .input-label small {
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.7;
+  }
+  input[type="number"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  input[type="number"]::placeholder { color: var(--border); }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  /* ===== TEXT SEARCH ===== */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 14px;
+  }
+  .search-icon {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 16px;
+    pointer-events: none;
+  }
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 12px 11px 38px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.5px;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(247,201,79,0.12);
+  }
+  input[type="text"]::placeholder { color: var(--border); font-family: var(--font); font-size: 13px; font-weight: 400; letter-spacing: 0; }
+
+  /* ===== UNIT HINT ===== */
+  .unit-hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    opacity: 0.7;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s ease;
+    outline: none;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 16px rgba(79,142,247,0.3);
+  }
+  .btn-primary:active { transform: scale(0.97); background: #3a7ae8; }
+  .btn-clear {
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1.5px solid var(--border);
+    padding: 12px 14px;
+  }
+  .btn-clear:active { transform: scale(0.97); }
+
+  /* ===== RESULTS ===== */
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    animation: fadeUp 0.4s ease both;
+  }
+  .results-count {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .results-count strong { color: var(--accent); font-family: var(--mono); }
+  .badge {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 99px;
+    font-weight: 600;
+    font-family: var(--mono);
+  }
+  .badge-found { background: rgba(62,207,142,0.15); color: var(--success); }
+  .badge-none { background: rgba(255,107,107,0.12); color: var(--danger); }
+
+  /* ===== RESULT CARDS ===== */
+  .result-item {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    animation: fadeUp 0.35s ease both;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 3px 0 0 3px;
+  }
+  .result-item:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+  }
+  .result-code {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .result-dims {
+    display: flex;
+    gap: 8px;
+    margin-top: 7px;
+    flex-wrap: wrap;
+  }
+  .dim-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .dim-chip .dim-key { color: var(--text-muted); font-size: 10px; }
+  .dim-chip .dim-val { color: var(--accent2); font-weight: 600; }
+  .btn-copy {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    padding: 10px 13px;
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+  .btn-copy svg { width: 16px; height: 16px; }
+  .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-copy.copied { border-color: var(--success); color: var(--success); background: rgba(62,207,142,0.1); }
+  .btn-copy .copy-label { font-size: 10px; font-family: var(--font); }
+
+  /* ===== EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    animation: fadeUp 0.4s ease both;
+  }
+  .empty-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-state p { color: var(--text-muted); font-size: 14px; }
+  .empty-state strong { color: var(--danger); font-family: var(--mono); }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 14px;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--text-muted);
+    opacity: 0.5;
+  }
+
+  /* ===== STATS BAR ===== */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.45s ease both;
+  }
+  .stat-item {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .stat-val {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-icon">⚙️</div>
+    <h1>ค้นหารหัสลูกปืน</h1>
+    <p>มอเตอร์ไซค์ · Ball Bearing Finder</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- SEARCH CARD -->
+  <div class="card" style="animation-delay:0.05s">
+    <div class="card-title">🔍 ค้นหาตามขนาด (มม.)</div>
+
+    <div class="input-row">
+      <div class="input-wrap">
+        <div class="input-label"><span>d</span> <small>วงแหวนใน</small></div>
+        <input type="number" id="inp_d" placeholder="12" min="0" inputmode="decimal">
+      </div>
+      <div class="input-wrap">
+        <div class="input-label"><span>D</span> <small>วงแหวนนอก</small></div>
+        <input type="number" id="inp_D" placeholder="32" min="0" inputmode="decimal">
+      </div>
+      <div class="input-wrap">
+        <div class="input-label"><span>B</span> <small>ความหนา</small></div>
+        <input type="number" id="inp_B" placeholder="10" min="0" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="unit-hint">* กรอกค่าที่ต้องการค้นหา (ไม่ต้องกรอกทุกช่อง)</div>
+
+    <div class="divider">หรือค้นหาด้วยรหัส</div>
+
+    <div class="search-wrap">
+      <span class="search-icon">🔎</span>
+      <input type="text" id="inp_code" placeholder="พิมพ์รหัส เช่น 6201, 6302...">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doSearch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="17" height="17"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        ค้นหา
+      </button>
+      <button class="btn btn-clear" onclick="doClear()" title="ล้างข้อมูล">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsSection" style="display:none">
+    <div class="results-header">
+      <div class="results-count">พบ <strong id="countNum">0</strong> รายการ</div>
+      <div class="badge" id="resultBadge"></div>
+    </div>
+    <div id="resultsList"></div>
+  </div>
+
+  <div class="footer">ข้อมูลลูกปืนมอเตอร์ไซค์ · v1.0</div>
+
+</div>
+
+<script>
+/* =====================================================
+   📦 DATA — เพิ่มข้อมูลลูกปืนได้ในส่วนนี้
+   Format: { code, d (วงในมม.), D (วงนอกมม.), B (หนามม.), note? }
+   ===================================================== */
+const BEARINGS = [
+  // === ซีรีส์ 6000 (Extra Light) ===
+  { code: "6000", d: 10, D: 26, B: 8 },
+  { code: "6001", d: 12, D: 28, B: 8 },
+  { code: "6002", d: 15, D: 32, B: 9 },
+  { code: "6003", d: 17, D: 35, B: 10 },
+  { code: "6004", d: 20, D: 42, B: 12 },
+  { code: "6005", d: 25, D: 47, B: 12 },
+  { code: "6006", d: 30, D: 55, B: 13 },
+  { code: "6007", d: 35, D: 62, B: 14 },
+  { code: "6008", d: 40, D: 68, B: 15 },
+  { code: "6009", d: 45, D: 75, B: 16 },
+  { code: "6010", d: 50, D: 80, B: 16 },
+
+  // === ซีรีส์ 6200 (Light) ===
+  { code: "6200", d: 10, D: 30, B: 9 },
+  { code: "6201", d: 12, D: 32, B: 10 },
+  { code: "6202", d: 15, D: 35, B: 11 },
+  { code: "6203", d: 17, D: 40, B: 12 },
+  { code: "6204", d: 20, D: 47, B: 14 },
+  { code: "6205", d: 25, D: 52, B: 15 },
+  { code: "6206", d: 30, D: 62, B: 16 },
+  { code: "6207", d: 35, D: 72, B: 17 },
+  { code: "6208", d: 40, D: 80, B: 18 },
+  { code: "6209", d: 45, D: 85, B: 19 },
+  { code: "6210", d: 50, D: 90, B: 20 },
+
+  // === ซีรีส์ 6300 (Medium) ===
+  { code: "6300", d: 10, D: 35, B: 11 },
+  { code: "6301", d: 12, D: 37, B: 12 },
+  { code: "6302", d: 15, D: 42, B: 13 },
+  { code: "6303", d: 17, D: 47, B: 14 },
+  { code: "6304", d: 20, D: 52, B: 15 },
+  { code: "6305", d: 25, D: 62, B: 17 },
+  { code: "6306", d: 30, D: 72, B: 19 },
+  { code: "6307", d: 35, D: 80, B: 21 },
+  { code: "6308", d: 40, D: 90, B: 23 },
+  { code: "6309", d: 45, D: 100, B: 25 },
+  { code: "6310", d: 50, D: 110, B: 27 },
+
+  // === ซีรีส์ 6800 (Thin Section) ===
+  { code: "6800", d: 10, D: 19, B: 5 },
+  { code: "6801", d: 12, D: 21, B: 5 },
+  { code: "6802", d: 15, D: 24, B: 5 },
+  { code: "6803", d: 17, D: 26, B: 5 },
+  { code: "6804", d: 20, D: 32, B: 7 },
+  { code: "6805", d: 25, D: 37, B: 7 },
+  { code: "6806", d: 30, D: 42, B: 7 },
+  { code: "6807", d: 35, D: 47, B: 7 },
+  { code: "6808", d: 40, D: 52, B: 7 },
+  { code: "6809", d: 45, D: 58, B: 7 },
+  { code: "6810", d: 50, D: 65, B: 7 },
+
+  // === ซีรีส์ 6900 (Thin Section Light) ===
+  { code: "6900", d: 10, D: 22, B: 6 },
+  { code: "6901", d: 12, D: 24, B: 6 },
+  { code: "6902", d: 15, D: 28, B: 7 },
+  { code: "6903", d: 17, D: 30, B: 7 },
+  { code: "6904", d: 20, D: 37, B: 9 },
+  { code: "6905", d: 25, D: 42, B: 9 },
+  { code: "6906", d: 30, D: 47, B: 9 },
+  { code: "6907", d: 35, D: 55, B: 10 },
+  { code: "6908", d: 40, D: 62, B: 12 },
+  { code: "6909", d: 45, D: 68, B: 12 },
+  { code: "6910", d: 50, D: 72, B: 12 },
+
+  // === ซีรีส์ 630X (Miniature) ===
+  { code: "MR63",  d: 3,  D: 6,  B: 2.5 },
+  { code: "MR74",  d: 4,  D: 7,  B: 2.5 },
+  { code: "MR84",  d: 4,  D: 8,  B: 3 },
+  { code: "MR85",  d: 5,  D: 8,  B: 2.5 },
+  { code: "MR95",  d: 5,  D: 9,  B: 3 },
+  { code: "MR104", d: 4,  D: 10, B: 4 },
+  { code: "MR105", d: 5,  D: 10, B: 4 },
+  { code: "MR106", d: 6,  D: 10, B: 3 },
+  { code: "MR115", d: 5,  D: 11, B: 4 },
+  { code: "MR117", d: 7,  D: 11, B: 3 },
+  { code: "MR126", d: 6,  D: 12, B: 4 },
+  { code: "MR128", d: 8,  D: 12, B: 3.5 },
+  { code: "MR137", d: 7,  D: 13, B: 4 },
+  { code: "MR148", d: 8,  D: 14, B: 4 },
+  { code: "MR149", d: 9,  D: 14, B: 4.5 },
+  { code: "MR158", d: 8,  D: 15, B: 5 },
+  { code: "MR159", d: 9,  D: 15, B: 5 },
+  { code: "MR1610",d: 10, D: 16, B: 5 },
+
+  // === ซีรีส์ HK (Needle Roller) ===
+  { code: "HK0306", d: 3,  D: 6.5, B: 6 },
+  { code: "HK0408", d: 4,  D: 8,   B: 8 },
+  { code: "HK0508", d: 5,  D: 9,   B: 8 },
+  { code: "HK0609", d: 6,  D: 10,  B: 9 },
+  { code: "HK0709", d: 7,  D: 11,  B: 9 },
+  { code: "HK0810", d: 8,  D: 12,  B: 10 },
+  { code: "HK1010", d: 10, D: 14,  B: 10 },
+  { code: "HK1210", d: 12, D: 16,  B: 10 },
+  { code: "HK1412", d: 14, D: 20,  B: 12 },
+  { code: "HK1512", d: 15, D: 21,  B: 12 },
+  { code: "HK1616", d: 16, D: 22,  B: 16 },
+  { code: "HK1616", d: 16, D: 22,  B: 16 },
+  { code: "HK2016", d: 20, D: 26,  B: 16 },
+  { code: "HK2516", d: 25, D: 32,  B: 16 },
+  { code: "HK3020", d: 30, D: 37,  B: 20 },
+
+  // === ซีรีส์ 51xxx (Thrust Ball) ===
+  { code: "51100", d: 10, D: 24, B: 9 },
+  { code: "51101", d: 12, D: 26, B: 9 },
+  { code: "51102", d: 15, D: 28, B: 9 },
+  { code: "51103", d: 17, D: 30, B: 9 },
+  { code: "51104", d: 20, D: 35, B: 10 },
+  { code: "51105", d: 25, D: 42, B: 11 },
+  { code: "51106", d: 30, D: 47, B: 11 },
+  { code: "51107", d: 35, D: 52, B: 12 },
+  { code: "51108", d: 40, D: 60, B: 13 },
+  { code: "51200", d: 10, D: 26, B: 11 },
+  { code: "51201", d: 12, D: 28, B: 11 },
+  { code: "51202", d: 15, D: 32, B: 12 },
+  { code: "51203", d: 17, D: 35, B: 12 },
+  { code: "51204", d: 20, D: 40, B: 14 },
+  { code: "51205", d: 25, D: 47, B: 15 },
+  { code: "51206", d: 30, D: 52, B: 16 },
+  { code: "51207", d: 35, D: 62, B: 18 },
+  { code: "51208", d: 40, D: 68, B: 19 },
+
+  // === ลูกปืนมอเตอรไซค์ทั่วไป (แบบพิเศษ) ===
+  { code: "6202-2RS", d: 15, D: 35, B: 11, note: "มีซีลยาง" },
+  { code: "6203-2RS", d: 17, D: 40, B: 12, note: "มีซีลยาง" },
+  { code: "6204-2RS", d: 20, D: 47, B: 14, note: "มีซีลยาง" },
+  { code: "6205-2RS", d: 25, D: 52, B: 15, note: "มีซีลยาง" },
+  { code: "6206-2RS", d: 30, D: 62, B: 16, note: "มีซีลยาง" },
+  { code: "6301-2RS", d: 12, D: 37, B: 12, note: "มีซีลยาง" },
+  { code: "6302-2RS", d: 15, D: 42, B: 13, note: "มีซีลยาง" },
+  { code: "6303-2RS", d: 17, D: 47, B: 14, note: "มีซีลยาง" },
+  { code: "6304-2RS", d: 20, D: 52, B: 15, note: "มีซีลยาง" },
+  { code: "6001-ZZ",  d: 12, D: 28, B: 8,  note: "มีฝาโลหะ" },
+  { code: "6002-ZZ",  d: 15, D: 32, B: 9,  note: "มีฝาโลหะ" },
+  { code: "6201-ZZ",  d: 12, D: 32, B: 10, note: "มีฝาโลหะ" },
+  { code: "6202-ZZ",  d: 15, D: 35, B: 11, note: "มีฝาโลหะ" },
+  { code: "6203-ZZ",  d: 17, D: 40, B: 12, note: "มีฝาโลหะ" },
+  { code: "6204-ZZ",  d: 20, D: 47, B: 14, note: "มีฝาโลหะ" },
+  { code: "6205-ZZ",  d: 25, D: 52, B: 15, note: "มีฝาโลหะ" },
+  { code: "6206-ZZ",  d: 30, D: 62, B: 16, note: "มีฝาโลหะ" },
+];
+
+/* =====================================================
+   📊 STATS
+   ===================================================== */
+function renderStats() {
+  const codes = [...new Set(BEARINGS.map(b => b.code.replace(/-.*/, '')))];
+  const uniqueD  = [...new Set(BEARINGS.map(b => b.d))];
+  const statsBar = document.getElementById('statsBar');
+  statsBar.innerHTML = `
+    <div class="stat-item"><div class="stat-val">${BEARINGS.length}</div><div class="stat-label">รหัสทั้งหมด</div></div>
+    <div class="stat-item"><div class="stat-val">${uniqueD.length}</div><div class="stat-label">ขนาดวงใน</div></div>
+    <div class="stat-item"><div class="stat-val">${codes.length}</div><div class="stat-label">ซีรีส์</div></div>
+  `;
+}
+
+/* =====================================================
+   🔍 SEARCH LOGIC
+   ===================================================== */
+function doSearch() {
+  const d    = parseFloat(document.getElementById('inp_d').value);
+  const D    = parseFloat(document.getElementById('inp_D').value);
+  const B    = parseFloat(document.getElementById('inp_B').value);
+  const code = document.getElementById('inp_code').value.trim().toUpperCase();
+
+  let results = BEARINGS;
+
+  if (!isNaN(d)) results = results.filter(b => b.d === d);
+  if (!isNaN(D)) results = results.filter(b => b.D === D);
+  if (!isNaN(B)) results = results.filter(b => b.B === B);
+  if (code)      results = results.filter(b => b.code.toUpperCase().includes(code));
+
+  const hasFilter = !isNaN(d) || !isNaN(D) || !isNaN(B) || code;
+  if (!hasFilter) {
+    showAll(BEARINGS);
+    return;
+  }
+  renderResults(results);
+}
+
+function showAll(list) {
+  renderResults(list);
+}
+
+function renderResults(list) {
+  const section   = document.getElementById('resultsSection');
+  const countNum  = document.getElementById('countNum');
+  const badge     = document.getElementById('resultBadge');
+  const resList   = document.getElementById('resultsList');
+
+  section.style.display = 'block';
+  countNum.textContent = list.length;
+
+  if (list.length > 0) {
+    badge.textContent = 'พบข้อมูล';
+    badge.className = 'badge badge-found';
+  } else {
+    badge.textContent = 'ไม่พบ';
+    badge.className = 'badge badge-none';
+  }
+
+  if (list.length === 0) {
+    resList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔩</div>
+        <p>ไม่พบข้อมูลลูกปืนที่ตรงกัน<br><strong>ลองปรับขนาดหรือรหัส</strong>ที่ค้นหา</p>
+      </div>`;
+    return;
+  }
+
+  resList.innerHTML = list.map((b, i) => `
+    <div class="result-item" style="animation-delay:${i * 0.04}s">
+      <div>
+        <div class="result-code">${b.code}</div>
+        <div class="result-dims">
+          <div class="dim-chip"><span class="dim-key">d</span>&nbsp;<span class="dim-val">${b.d}</span></div>
+          <div class="dim-chip"><span class="dim-key">D</span>&nbsp;<span class="dim-val">${b.D}</span></div>
+          <div class="dim-chip"><span class="dim-key">B</span>&nbsp;<span class="dim-val">${b.B}</span></div>
+          ${b.note ? `<div class="dim-chip"><span class="dim-key">📌</span>&nbsp;<span class="dim-val" style="color:var(--success);font-size:11px">${b.note}</span></div>` : ''}
+        </div>
+      </div>
+      <button class="btn-copy" onclick="copyCode('${b.code}', this)" title="คัดลอกรหัส">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        <span class="copy-label">คัดลอก</span>
+      </button>
+    </div>
+  `).join('');
+}
+
+/* =====================================================
+   📋 COPY
+   ===================================================== */
+function copyCode(code, btn) {
+  navigator.clipboard.writeText(code).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <span class="copy-label">คัดลอกแล้ว</span>`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        <span class="copy-label">คัดลอก</span>`;
+    }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    const el = document.createElement('textarea');
+    el.value = code;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    btn.classList.add('copied');
+    setTimeout(() => btn.classList.remove('copied'), 2000);
+  });
+}
+
+/* =====================================================
+   🧹 CLEAR
+   ===================================================== */
+function doClear() {
+  document.getElementById('inp_d').value    = '';
+  document.getElementById('inp_D').value    = '';
+  document.getElementById('inp_B').value    = '';
+  document.getElementById('inp_code').value = '';
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('inp_d').focus();
+}
+
+/* =====================================================
+   ⌨️ ENTER KEY SUPPORT
+   ===================================================== */
+['inp_d','inp_D','inp_B','inp_code'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+});
+
+/* =====================================================
+   🚀 INIT
+   ===================================================== */
+renderStats();
+</script>
+</body>
+</html>
